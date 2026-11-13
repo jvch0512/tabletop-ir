@@ -20,7 +20,12 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 
+const DEMO = document.documentElement.dataset.demo === "1";
 async function api(path, body) {
+  if (DEMO) {
+    if (!globalThis.tabletopApi) await (await import("./lib/browser-api.js")).install("./scenarios.json");
+    try { return globalThis.tabletopApi(path, body); } catch (e) { throw new Error(e.message); }
+  }
   const res = await fetch(path, body === undefined ? {} : { method: "POST", headers: HDR, body: JSON.stringify(body) });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "request failed");
@@ -155,7 +160,15 @@ async function renderEnd(v) {
       h("div", { class: "panel" },
         h("div", { class: "score" }, h("div", { class: "grade" }, r.score.grade),
           h("div", null, h("h1", null, r.score.total + " / 100"), h("div", { class: "lead" }, "Best achievable: " + r.optimal.score + ". Gap: " + r.gap + ". Simulated duration " + clock(r.elapsedMinutes) + "."))),
-        h("a", { class: "dl-link", href: "/api/sessions/" + v.id + "/report.md" }, "Download the after-action report (Markdown)")),
+        h("a", { class: "dl-link", href: "/api/sessions/" + v.id + "/report.md", onclick: DEMO ? async (ev) => {
+          ev.preventDefault();
+          const md = await api("/api/sessions/" + v.id + "/report.md");
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown" }));
+          a.download = "after-action-" + v.scenario.id + ".md";
+          a.click();
+          URL.revokeObjectURL(a.href);
+        } : null }, "Download the after-action report (Markdown)")),
       h("div", { class: "panel" }, h("h2", null, "Where points were lost"), rev),
       h("div", { class: "panel" }, h("h2", null, "Timeline"), logView(v))),
     h("aside", null,

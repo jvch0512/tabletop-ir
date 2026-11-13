@@ -10,6 +10,10 @@ Zero runtime dependencies. TypeScript, Node 20+. Loopback only.
 
 Most tabletop exercises end with "that was useful" and no evidence of what changed. Here each decision has a cost in containment, operations, trust, evidence, legal exposure and money, and the report shows exactly which decision lost the most points and which controls it relates to.
 
+## Live demo
+
+https://jvch0512.github.io/tabletop-ir/ runs the same engine entirely in the browser (no server, nothing uploaded). `scripts/build-demo.sh` assembles it, and `src/browser-api.ts` mirrors the server routes so both modes share one `view()` and are tested against the same scenarios.
+
 ## Run it
 
 ```bash

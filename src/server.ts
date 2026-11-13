@@ -3,10 +3,12 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { applyChoice, newSession, nodeOf, score, visibleChoices } from "./engine.js";
+import { applyChoice, newSession, nodeOf } from "./engine.js";
+import { view } from "./view.js";
+export { view };
 import { buildReport, markdown } from "./report.js";
 import { loadScenarios } from "./scenario.js";
-import { Scenario, Session } from "./types.js";
+import { Session } from "./types.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
@@ -30,24 +32,6 @@ function readBody(req: http.IncomingMessage): Promise<Buffer> {
     req.on("end", () => resolve(Buffer.concat(chunks)));
     req.on("error", reject);
   });
-}
-
-/** What the player may see: current scene and option labels only, never the quality of unchosen options. */
-export function view(sc: Scenario, s: Session) {
-  const done = s.nodeId === null;
-  const node = done ? null : nodeOf(sc, s.nodeId!);
-  return {
-    id: s.id,
-    scenario: { id: sc.id, title: sc.title, organisation: sc.organisation, startLabel: sc.startLabel },
-    minutes: s.minutes,
-    vars: s.vars,
-    deadlines: s.deadlines,
-    finished: done,
-    scene: node && { id: node.id, title: node.title, body: node.body, timeLimitSeconds: node.timeLimitSeconds ?? null, choices: visibleChoices(sc, s).map((c) => ({ id: c.id, label: c.label })) },
-    log: s.log.map((e) => ({ step: e.step, scene: e.nodeTitle, choice: e.choiceLabel, atMinutes: e.atMinutes, timedOut: e.timedOut, quality: e.insight.quality, insight: e.insight.text, notes: e.notes, effects: e.effects })),
-    history: s.history,
-    score: done ? score(sc, s) : null,
-  };
 }
 
 export interface ServerOptions { scenariosDir?: string; publicDir?: string }

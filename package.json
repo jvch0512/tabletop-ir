@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && node dist/src/server-main.js",
-    "test": "tsc && node --test dist/test/scenario.test.js dist/test/engine.test.js dist/test/analysis.test.js dist/test/report.test.js dist/test/server.test.js"
+    "test": "tsc && node --test dist/test/scenario.test.js dist/test/engine.test.js dist/test/analysis.test.js dist/test/report.test.js dist/test/server.test.js dist/test/browser-api.test.js"
   },
   "repository": "github:jvch0512/tabletop-ir",
   "keywords": ["incident-response", "tabletop", "nis2", "gdpr", "ransomware", "cybersecurity", "training", "typescript"],
