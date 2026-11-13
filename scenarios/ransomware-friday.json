@@ -1,0 +1,746 @@
+{
+  "id": "ransomware-friday",
+  "title": "Ransomware on a Friday evening",
+  "summary": "Encryption starts on the file servers just after the IT team goes home. Nine decisions over eight simulated days, with NIS2 and GDPR clocks running.",
+  "difficulty": "standard",
+  "organisation": "Costa Pay Services S.L. (fictional fintech)",
+  "startLabel": "Friday 18:42",
+  "startNode": "first-alert",
+  "deadlines": [
+    {
+      "id": "nis2-early",
+      "label": "NIS2 early warning to the competent authority or CSIRT",
+      "reference": "NIS2 Art.23(4)(a)",
+      "dueMinutes": 1440,
+      "flag": "early_warning",
+      "penalty": {
+        "legal": 15,
+        "trust": -5
+      }
+    },
+    {
+      "id": "nis2-notify",
+      "label": "NIS2 incident notification",
+      "reference": "NIS2 Art.23(4)(b)",
+      "dueMinutes": 4320,
+      "flag": "authority_notified",
+      "penalty": {
+        "legal": 20,
+        "trust": -10
+      }
+    },
+    {
+      "id": "gdpr-72",
+      "label": "GDPR personal data breach notification",
+      "reference": "GDPR Art.33",
+      "dueMinutes": 4320,
+      "flag": "dpa_notified",
+      "penalty": {
+        "legal": 25,
+        "trust": -5
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "first-alert",
+      "title": "Mass file renames on the file servers",
+      "timeLimitSeconds": 90,
+      "onTimeout": "call-ciso",
+      "body": "The EDR console shows three file servers renaming thousands of files with a strange extension. A text file called READ_ME_NOW is appearing in every folder. The on-call engineer is looking at you for a decision. Every minute, more files are encrypted.",
+      "choices": [
+        {
+          "id": "isolate",
+          "label": "Isolate the three affected servers from the network, leave them powered on",
+          "minutes": 10,
+          "effects": {
+            "containment": 25,
+            "operations": -10
+          },
+          "next": "scope",
+          "insight": {
+            "quality": "good",
+            "text": "Fast, targeted isolation stops lateral movement while keeping memory and disks intact for forensics. A pre-approved first-responder playbook makes this a five-minute call, not a debate.",
+            "controls": [
+              "INC-01",
+              "ACC-04"
+            ]
+          },
+          "set": [
+            "isolated"
+          ]
+        },
+        {
+          "id": "network-off",
+          "label": "Pull the plug on the whole corporate network",
+          "minutes": 15,
+          "effects": {
+            "containment": 25,
+            "operations": -50
+          },
+          "next": "scope",
+          "insight": {
+            "quality": "ok",
+            "text": "It contains the spread, but it also takes down payments and customer support. Network segmentation lets you cut exactly what is affected.",
+            "controls": [
+              "ACC-04",
+              "BCP-01"
+            ]
+          },
+          "set": [
+            "isolated"
+          ]
+        },
+        {
+          "id": "call-ciso",
+          "label": "Phone the CISO and wait for instructions before touching anything",
+          "minutes": 45,
+          "effects": {
+            "containment": -5,
+            "operations": -15
+          },
+          "next": "scope",
+          "insight": {
+            "quality": "poor",
+            "text": "Nothing was pre-authorised, so encryption ran for 45 more minutes. Give the first responder clear authority to isolate.",
+            "controls": [
+              "INC-01",
+              "GOV-03"
+            ]
+          }
+        },
+        {
+          "id": "reboot",
+          "label": "Reboot the servers to see if the problem clears",
+          "minutes": 15,
+          "effects": {
+            "containment": -15,
+            "operations": -10,
+            "evidence": -25
+          },
+          "next": "scope",
+          "insight": {
+            "quality": "poor",
+            "text": "A reboot wipes volatile memory (where encryption keys may still live) and can trigger more encryption on startup.",
+            "controls": [
+              "INC-01",
+              "OPS-06"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "scope",
+      "title": "The ransom note",
+      "notBefore": 120,
+      "timeLimitSeconds": 120,
+      "onTimeout": "it-only",
+      "body": "Two hours in. The note demands EUR 1.8 million in Bitcoin within 72 hours and claims 40 GB of data has been copied. Finance, legal and the CEO are all calling the IT lead. Nobody has decided who is in charge.",
+      "choices": [
+        {
+          "id": "activate",
+          "label": "Activate the incident response plan: crisis team, legal, communications and the IR retainer",
+          "minutes": 30,
+          "effects": {
+            "containment": 10,
+            "cost": 15000,
+            "legal": -5
+          },
+          "next": "backups",
+          "insight": {
+            "quality": "good",
+            "text": "Clear roles, a retainer and a decision log are what separate a managed incident from a panic. Legal involvement early also protects privilege.",
+            "controls": [
+              "INC-01",
+              "BCP-02",
+              "GOV-03"
+            ]
+          },
+          "set": [
+            "crisis_team",
+            "ir_retainer"
+          ]
+        },
+        {
+          "id": "it-only",
+          "label": "Keep it inside IT for now to avoid panic",
+          "minutes": 20,
+          "effects": {
+            "containment": -5,
+            "legal": 10
+          },
+          "next": "backups",
+          "insight": {
+            "quality": "poor",
+            "text": "Late escalation delays legal, communications and regulatory decisions. Management accountability is part of NIS2.",
+            "controls": [
+              "GOV-01",
+              "BCP-02"
+            ]
+          }
+        },
+        {
+          "id": "negotiate",
+          "label": "Open contact with the attackers to buy time",
+          "minutes": 20,
+          "effects": {
+            "legal": 10
+          },
+          "next": "backups",
+          "insight": {
+            "quality": "poor",
+            "text": "Negotiating without specialists and sanctions advice exposes you. Buying time is fine, but only through people who do this daily.",
+            "controls": [
+              "INC-01"
+            ]
+          },
+          "set": [
+            "contacted_attackers"
+          ],
+          "modifiers": [
+            {
+              "when": {
+                "none": [
+                  "ir_retainer"
+                ]
+              },
+              "effects": {
+                "trust": -5
+              },
+              "text": "Without an incident response firm, the attackers read your messages as weakness."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backups",
+      "title": "Backups and evidence",
+      "notBefore": 300,
+      "timeLimitSeconds": 120,
+      "onTimeout": "restore-now",
+      "body": "The online backup share was mapped to the domain and is encrypted. One offline tape set exists, six days old. The business wants systems back as soon as possible, and the forensic firm warns that rebuilding will overwrite evidence.",
+      "choices": [
+        {
+          "id": "forensic",
+          "label": "Take forensic images before touching anything else",
+          "minutes": 120,
+          "effects": {
+            "evidence": 30,
+            "operations": -5,
+            "cost": 25000
+          },
+          "next": "regulator",
+          "insight": {
+            "quality": "good",
+            "text": "Images let investigators prove what was taken and how the attackers got in, which feeds the regulator notification, insurance and any legal action.",
+            "controls": [
+              "INC-01",
+              "OPS-06"
+            ]
+          },
+          "set": [
+            "forensic_image"
+          ]
+        },
+        {
+          "id": "restore-now",
+          "label": "Start restoring from the offline tapes immediately",
+          "minutes": 90,
+          "effects": {
+            "operations": 15,
+            "evidence": -25,
+            "containment": -10
+          },
+          "next": "regulator",
+          "insight": {
+            "quality": "poor",
+            "text": "Restoring before the intrusion is understood overwrote evidence and reintroduced the attacker's footholds.",
+            "controls": [
+              "OPS-05",
+              "BCP-01"
+            ]
+          },
+          "set": [
+            "restoring"
+          ],
+          "modifiers": [
+            {
+              "when": {
+                "none": [
+                  "isolated"
+                ]
+              },
+              "effects": {
+                "containment": -15
+              },
+              "text": "Restoring into a network that was never isolated fed the attackers fresh systems to encrypt."
+            }
+          ]
+        },
+        {
+          "id": "verify",
+          "label": "Verify the tapes and run a test restore in an isolated lab first",
+          "minutes": 60,
+          "effects": {
+            "operations": 5,
+            "evidence": 5,
+            "cost": 5000
+          },
+          "next": "regulator",
+          "insight": {
+            "quality": "good",
+            "text": "Knowing your backups are clean and restorable before committing to recovery avoids a second disaster. Regular restore tests make this fast.",
+            "controls": [
+              "OPS-05",
+              "BCP-01"
+            ]
+          },
+          "set": [
+            "backups_checked"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "regulator",
+      "title": "The regulatory clock",
+      "notBefore": 720,
+      "timeLimitSeconds": 120,
+      "onTimeout": "wait-facts",
+      "body": "Twelve hours in. Legal reminds the room that NIS2 requires an early warning within 24 hours of becoming aware of a significant incident, and that personal data may be involved. We still do not know what was taken.",
+      "choices": [
+        {
+          "id": "early",
+          "label": "Send the NIS2 early warning now with what we know, and say what we do not",
+          "minutes": 30,
+          "effects": {
+            "legal": -10,
+            "trust": 5
+          },
+          "next": "stolen",
+          "insight": {
+            "quality": "good",
+            "text": "The early warning is deliberately thin: suspected cause, whether it looks malicious, possible cross-border impact. You update later.",
+            "controls": [
+              "INC-02"
+            ]
+          },
+          "set": [
+            "early_warning"
+          ]
+        },
+        {
+          "id": "wait-facts",
+          "label": "Wait until we know whether data was stolen before telling anyone",
+          "minutes": 30,
+          "effects": {},
+          "next": "stolen",
+          "insight": {
+            "quality": "poor",
+            "text": "The clock starts at awareness, not at certainty. Waiting for facts is exactly how teams miss the 24-hour window.",
+            "controls": [
+              "INC-02"
+            ]
+          }
+        },
+        {
+          "id": "insurer",
+          "label": "Notify the cyber insurer and wait for their guidance first",
+          "minutes": 120,
+          "effects": {},
+          "next": "stolen",
+          "insight": {
+            "quality": "ok",
+            "text": "Insurer notification matters for cover, but it does not replace regulatory notices, and the insurer will not ask you to skip them.",
+            "controls": [
+              "INC-02",
+              "TPR-02"
+            ]
+          },
+          "set": [
+            "insurer_notified"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stolen",
+      "title": "Data theft confirmed",
+      "notBefore": 1500,
+      "timeLimitSeconds": 150,
+      "onTimeout": "wait-full",
+      "body": "The IR firm confirms about 40 GB left the network, including personal data of roughly 12,000 customers. The attackers publish a sample on their leak site.",
+      "choices": [
+        {
+          "id": "formal",
+          "label": "File the formal NIS2 incident notification and the GDPR breach notification, and update as facts emerge",
+          "minutes": 90,
+          "effects": {
+            "legal": -15
+          },
+          "next": "ransom",
+          "insight": {
+            "quality": "good",
+            "text": "Both regulators accept a notification built in phases. Notify within 72 hours with what you have and complete it later.",
+            "controls": [
+              "INC-02",
+              "PRV-01"
+            ]
+          },
+          "set": [
+            "authority_notified",
+            "dpa_notified"
+          ]
+        },
+        {
+          "id": "wait-full",
+          "label": "Wait for the final forensic report before notifying",
+          "minutes": 30,
+          "effects": {},
+          "next": "ransom",
+          "insight": {
+            "quality": "poor",
+            "text": "Final forensic reports take weeks. The 72-hour limits apply to the first notification, not to the final answer.",
+            "controls": [
+              "INC-02"
+            ]
+          }
+        },
+        {
+          "id": "customers-first",
+          "label": "Email affected customers first and deal with regulators afterwards",
+          "minutes": 60,
+          "effects": {
+            "trust": 10,
+            "legal": 10
+          },
+          "next": "ransom",
+          "insight": {
+            "quality": "ok",
+            "text": "Telling customers is right when risk is high, but regulators expect to hear first or at the same time, and uncoordinated messages create confusion.",
+            "controls": [
+              "INC-02",
+              "PRV-02"
+            ]
+          },
+          "set": [
+            "customers_notified"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ransom",
+      "title": "To pay or not to pay",
+      "notBefore": 2400,
+      "timeLimitSeconds": 150,
+      "onTimeout": "pay-fast",
+      "body": "The attackers say the data will be released in about 32 hours unless the ransom is paid. The board asks you directly whether the company should pay.",
+      "choices": [
+        {
+          "id": "refuse-report",
+          "label": "Do not pay. Report to law enforcement and keep restoring",
+          "minutes": 60,
+          "effects": {
+            "legal": -5,
+            "operations": 5
+          },
+          "next": "press",
+          "insight": {
+            "quality": "good",
+            "text": "Payment guarantees nothing, funds further attacks and can breach sanctions rules. Reporting to law enforcement opens decryption help and intelligence sharing.",
+            "controls": [
+              "INC-01",
+              "TPR-01"
+            ]
+          },
+          "set": [
+            "law_enforcement"
+          ]
+        },
+        {
+          "id": "pay-checked",
+          "label": "Pay through a specialist negotiator after legal and sanctions screening",
+          "minutes": 240,
+          "effects": {
+            "cost": 900000,
+            "legal": 15,
+            "trust": -5,
+            "operations": 10
+          },
+          "next": "press",
+          "insight": {
+            "quality": "ok",
+            "text": "If payment is ever considered it must be a board decision with legal, sanctions screening and law enforcement involved. Even then, copies of the data remain with the attackers.",
+            "controls": [
+              "INC-01",
+              "GOV-01"
+            ]
+          },
+          "set": [
+            "ransom_paid"
+          ]
+        },
+        {
+          "id": "pay-fast",
+          "label": "Pay immediately to make the leak stop",
+          "minutes": 60,
+          "effects": {
+            "cost": 1800000,
+            "legal": 35,
+            "trust": -10
+          },
+          "next": "press",
+          "insight": {
+            "quality": "poor",
+            "text": "Paying without checks is a legal risk (sanctions) and a financial one. The leak is not stopped by payment: you are trusting criminals.",
+            "controls": [
+              "INC-01",
+              "GOV-01"
+            ]
+          },
+          "set": [
+            "ransom_paid"
+          ],
+          "modifiers": [
+            {
+              "when": {},
+              "effects": {
+                "trust": -10
+              },
+              "text": "Sample data appears on a second site anyway. The payment bought nothing."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "press",
+      "title": "Press and customers",
+      "notBefore": 4500,
+      "timeLimitSeconds": 120,
+      "onTimeout": "no-comment",
+      "body": "Day three. A journalist has the leak-site sample and wants comment within the hour. Customers are posting about the outage on social media and the call centre is overwhelmed.",
+      "choices": [
+        {
+          "id": "statement",
+          "label": "Publish a clear holding statement, a customer FAQ and a dedicated hotline",
+          "minutes": 90,
+          "effects": {
+            "trust": 15,
+            "cost": 20000
+          },
+          "next": "recovery",
+          "insight": {
+            "quality": "good",
+            "text": "Say what happened, what data is involved, what you are doing and what customers should do. Silence lets others tell the story.",
+            "controls": [
+              "INC-02",
+              "BCP-02"
+            ]
+          },
+          "set": [
+            "holding_statement"
+          ]
+        },
+        {
+          "id": "no-comment",
+          "label": "Reply 'no comment' and wait",
+          "minutes": 20,
+          "effects": {
+            "trust": -15
+          },
+          "next": "recovery",
+          "insight": {
+            "quality": "poor",
+            "text": "No comment reads as hiding something and hands the narrative to the attackers.",
+            "controls": [
+              "BCP-02"
+            ]
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Deny the leak until it is verified",
+          "minutes": 20,
+          "effects": {
+            "trust": -30,
+            "legal": 15
+          },
+          "next": "recovery",
+          "insight": {
+            "quality": "poor",
+            "text": "Misleading statements turn an incident into a scandal and create legal exposure when the sample is verified an hour later.",
+            "controls": [
+              "BCP-02",
+              "GOV-01"
+            ]
+          }
+        },
+        {
+          "id": "late-notice",
+          "label": "Submit the overdue regulator notifications now, together with a public statement",
+          "minutes": 60,
+          "effects": {
+            "legal": -5,
+            "trust": 5
+          },
+          "next": "recovery",
+          "insight": {
+            "quality": "ok",
+            "text": "Late is better than never, but the deadline is already missed and the penalty stands.",
+            "controls": [
+              "INC-02"
+            ]
+          },
+          "set": [
+            "authority_notified",
+            "dpa_notified",
+            "holding_statement"
+          ],
+          "visibleWhen": {
+            "none": [
+              "authority_notified"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "recovery",
+      "title": "Recovery",
+      "notBefore": 5800,
+      "timeLimitSeconds": 150,
+      "onTimeout": "fast",
+      "body": "Four days in. The business is losing money every hour and wants systems back. Forensics have identified several stolen administrator accounts, but the full extent is not yet known.",
+      "choices": [
+        {
+          "id": "phased",
+          "label": "Rebuild from clean images, rotate every credential and restore data in phases by criticality",
+          "minutes": 2880,
+          "effects": {
+            "operations": 20,
+            "containment": 35,
+            "cost": 60000
+          },
+          "next": "board",
+          "insight": {
+            "quality": "good",
+            "text": "Phased recovery from known-good sources with credential rotation is slower on day one and much safer on day ten.",
+            "controls": [
+              "BCP-01",
+              "ACC-03",
+              "OPS-05"
+            ]
+          },
+          "set": [
+            "credentials_rotated"
+          ]
+        },
+        {
+          "id": "fast",
+          "label": "Restore everything from backups as fast as possible and rotate credentials later",
+          "minutes": 1200,
+          "effects": {
+            "operations": 30,
+            "containment": 10
+          },
+          "next": "board",
+          "insight": {
+            "quality": "poor",
+            "text": "Speed without eviction invites a second round.",
+            "controls": [
+              "BCP-01",
+              "ACC-03"
+            ]
+          },
+          "modifiers": [
+            {
+              "when": {
+                "vars": [
+                  {
+                    "name": "containment",
+                    "op": "<",
+                    "value": 60
+                  }
+                ]
+              },
+              "effects": {
+                "operations": -40,
+                "trust": -15,
+                "containment": -30
+              },
+              "text": "The attackers return through administrator credentials that were never rotated and encrypt the restored systems again."
+            }
+          ]
+        },
+        {
+          "id": "consultants",
+          "label": "Keep everything offline until outside consultants certify every system clean",
+          "minutes": 4320,
+          "effects": {
+            "operations": 15,
+            "cost": 120000,
+            "trust": -10,
+            "containment": 30
+          },
+          "next": "board",
+          "insight": {
+            "quality": "ok",
+            "text": "Careful, but an outage of this length costs customers. Staged recovery with validation gets to safe and fast.",
+            "controls": [
+              "BCP-01"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "board",
+      "title": "Board debrief",
+      "notBefore": 11000,
+      "timeLimitSeconds": 120,
+      "onTimeout": "minimal",
+      "body": "Eight days after the first alert, the board asks what happened and what it will take to prevent a repeat.",
+      "choices": [
+        {
+          "id": "transparent",
+          "label": "Present a transparent timeline, the metrics and a costed investment request",
+          "minutes": 120,
+          "effects": {
+            "trust": 5,
+            "legal": -5
+          },
+          "next": null,
+          "insight": {
+            "quality": "good",
+            "text": "Boards fund what they understand. A factual timeline, honest gaps and a prioritised plan convert an incident into a security budget.",
+            "controls": [
+              "GOV-01",
+              "RSK-01"
+            ]
+          },
+          "set": [
+            "board_informed"
+          ]
+        },
+        {
+          "id": "minimal",
+          "label": "Send a short reassurance note",
+          "minutes": 30,
+          "effects": {},
+          "next": null,
+          "insight": {
+            "quality": "poor",
+            "text": "A reassurance note wastes the one moment when leadership attention is highest.",
+            "controls": [
+              "GOV-01"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

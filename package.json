@@ -1,0 +1,17 @@
+{
+  "name": "tabletop-ir",
+  "version": "1.0.0",
+  "description": "Incident response tabletop simulator: branching ransomware and fraud scenarios with a simulated clock, regulatory deadlines (NIS2, GDPR), scoring and an after-action report that compares your decisions with the best possible path. Zero runtime dependencies.",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "tabletop-ir": "dist/src/cli.js" },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && node dist/src/server-main.js",
+    "test": "tsc && node --test dist/test/scenario.test.js dist/test/engine.test.js dist/test/analysis.test.js dist/test/report.test.js dist/test/server.test.js"
+  },
+  "repository": "github:jvch0512/tabletop-ir",
+  "keywords": ["incident-response", "tabletop", "nis2", "gdpr", "ransomware", "cybersecurity", "training", "typescript"],
+  "devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.6.0" },
+  "engines": { "node": ">=20" }
+}

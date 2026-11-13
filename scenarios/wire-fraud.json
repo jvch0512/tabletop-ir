@@ -1,0 +1,264 @@
+{
+  "id": "wire-fraud",
+  "title": "The urgent wire request",
+  "summary": "An email 'from the CEO' asks finance for an urgent EUR 186,000 transfer to a new supplier. Short introductory exercise on business email compromise.",
+  "difficulty": "intro",
+  "organisation": "Costa Pay Services S.L. (fictional fintech)",
+  "startLabel": "Thursday 16:55",
+  "startNode": "request",
+  "deadlines": [
+    {
+      "id": "bank-recall",
+      "label": "Ask the bank to recall the transfer, if one was made",
+      "reference": "Bank recall window",
+      "dueMinutes": 1440,
+      "flag": "fraud_handled",
+      "penalty": {
+        "cost": 60000,
+        "trust": -5
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "title": "Urgent, confidential payment",
+      "timeLimitSeconds": 60,
+      "onTimeout": "pay",
+      "body": "An email arrives for a finance clerk from the CEO's address: a confidential acquisition needs EUR 186,000 sent today to a new account at a foreign bank. The CEO is travelling and asks her not to phone because the line is not secure.",
+      "choices": [
+        {
+          "id": "pay",
+          "label": "Process the payment, the CEO asked for it personally",
+          "minutes": 15,
+          "effects": {
+            "cost": 186000,
+            "trust": -5
+          },
+          "next": "discovery",
+          "insight": {
+            "quality": "poor",
+            "text": "Urgency, secrecy and 'do not call' are the classic markers. Payments to new accounts need out-of-band verification regardless of who asks.",
+            "controls": [
+              "TPR-01",
+              "PPL-01"
+            ]
+          },
+          "set": [
+            "payment_sent"
+          ]
+        },
+        {
+          "id": "reply",
+          "label": "Reply to the email asking the CEO to confirm",
+          "minutes": 20,
+          "effects": {
+            "cost": 186000,
+            "trust": -5
+          },
+          "next": "discovery",
+          "insight": {
+            "quality": "poor",
+            "text": "Confirming through the same channel only asks the attacker to confirm. Use a known phone number or a second approver.",
+            "controls": [
+              "TPR-01",
+              "PPL-01"
+            ]
+          },
+          "set": [
+            "payment_sent"
+          ],
+          "modifiers": [
+            {
+              "when": {},
+              "text": "The reply comes back within minutes: 'Yes, go ahead, it is urgent.' The transfer is released."
+            }
+          ]
+        },
+        {
+          "id": "callback",
+          "label": "Call the CEO on her known mobile number to verify before doing anything",
+          "minutes": 20,
+          "effects": {
+            "trust": 5
+          },
+          "next": "containment",
+          "insight": {
+            "quality": "good",
+            "text": "Out-of-band verification defeats almost all CEO fraud. The CEO knew nothing about it.",
+            "controls": [
+              "TPR-01",
+              "PPL-01"
+            ]
+          },
+          "set": [
+            "verified",
+            "fraud_handled"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "discovery",
+      "title": "The CEO knows nothing",
+      "notBefore": 240,
+      "timeLimitSeconds": 90,
+      "onTimeout": "wait-monday",
+      "body": "Four hours later the CEO lands and says she never sent the message. The transfer has gone out and the money is already at the foreign bank.",
+      "choices": [
+        {
+          "id": "call-bank",
+          "label": "Call our bank right now to request a recall and file a police report",
+          "minutes": 30,
+          "effects": {
+            "legal": -5
+          },
+          "next": "containment",
+          "insight": {
+            "quality": "good",
+            "text": "Recalls work best in the first hours. Banks have a fraud desk for exactly this, and police reports support the claim.",
+            "controls": [
+              "INC-01",
+              "INC-02"
+            ]
+          },
+          "set": [
+            "fraud_handled"
+          ],
+          "modifiers": [
+            {
+              "when": {},
+              "effects": {
+                "cost": -150000
+              },
+              "text": "Because the bank was called within hours, EUR 150,000 is frozen and returned."
+            }
+          ]
+        },
+        {
+          "id": "wait-monday",
+          "label": "Handle it on Monday when the right people are back",
+          "minutes": 3000,
+          "effects": {},
+          "next": "containment",
+          "insight": {
+            "quality": "poor",
+            "text": "Money moves on within a day. Waiting turns a recoverable loss into a total one.",
+            "controls": [
+              "INC-01"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "containment",
+      "title": "How did they know?",
+      "notBefore": 2900,
+      "timeLimitSeconds": 90,
+      "onTimeout": "delete",
+      "body": "The attackers knew the CEO's travel dates and the clerk's name. Someone has been reading mail.",
+      "choices": [
+        {
+          "id": "investigate",
+          "label": "Review the mailbox, reset credentials, enforce MFA and check for forwarding rules",
+          "minutes": 180,
+          "effects": {
+            "containment": 60,
+            "evidence": 20,
+            "cost": 5000
+          },
+          "next": "lessons",
+          "insight": {
+            "quality": "good",
+            "text": "Business email compromise often starts with a phished mailbox and a silent forwarding rule.",
+            "controls": [
+              "ACC-02",
+              "OPS-06",
+              "INC-01"
+            ]
+          },
+          "set": [
+            "mailbox_secured"
+          ]
+        },
+        {
+          "id": "delete",
+          "label": "Delete the suspicious email and move on",
+          "minutes": 5,
+          "effects": {
+            "evidence": -20
+          },
+          "next": "lessons",
+          "insight": {
+            "quality": "poor",
+            "text": "Deleting the message destroys evidence and leaves the intruder in the mailbox.",
+            "controls": [
+              "INC-01",
+              "OPS-06"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "lessons",
+      "title": "Preventing a repeat",
+      "notBefore": 5000,
+      "timeLimitSeconds": 90,
+      "onTimeout": "reminder",
+      "body": "Management asks what will change.",
+      "choices": [
+        {
+          "id": "process",
+          "label": "Mandate call-back verification and dual approval for new or changed payment details",
+          "minutes": 60,
+          "effects": {
+            "containment": 20,
+            "trust": 10
+          },
+          "next": null,
+          "insight": {
+            "quality": "good",
+            "text": "A process control removes the dependency on someone noticing the lure under pressure.",
+            "controls": [
+              "TPR-01",
+              "PPL-01",
+              "ACC-01"
+            ]
+          }
+        },
+        {
+          "id": "reminder",
+          "label": "Send an awareness reminder to all staff",
+          "minutes": 20,
+          "effects": {
+            "containment": 5
+          },
+          "next": null,
+          "insight": {
+            "quality": "ok",
+            "text": "Awareness helps but should back a process control, not replace it.",
+            "controls": [
+              "PPL-01"
+            ]
+          }
+        },
+        {
+          "id": "nothing",
+          "label": "Nothing: the incident is closed",
+          "minutes": 5,
+          "effects": {},
+          "next": null,
+          "insight": {
+            "quality": "poor",
+            "text": "Without a change in process the same message will work on the next clerk.",
+            "controls": [
+              "GOV-01"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
